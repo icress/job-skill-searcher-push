@@ -15,6 +15,7 @@ topics = None
 num_to_check = 1
 
 
+# This is the function that is called when the user hits the search button on the Tkinter window
 def search():
     global career
     global topics
@@ -40,27 +41,30 @@ def search():
                            row=5)
 
 
+# This is a recursive function that gets the links for the different job postings
 def get_links(start_link, all_text, num_checked, to_check):
     try:
         if num_checked < to_check:
             start_link.click()
 
-            new_element = driver.find_elements(by=By.CSS_SELECTOR,
-                                               value='#gws-plugins-horizon-jobs__job_details_page')
+            new_elements = driver.find_elements(by=By.CSS_SELECTOR,
+                                                value='#gws-plugins-horizon-jobs__job_details_page')
 
-            new_el = new_element[num_checked]
+            new_el = new_elements[num_checked]
             new_content = new_el.get_attribute('innerHTML').strip().lower()
             all_text += new_content
 
             new_links = driver.find_elements(by=By.CSS_SELECTOR,
                                              value='.gws-plugins-horizon-jobs__tl-lif')
             num_checked += 1
+
             try:
                 start_link = new_links[num_checked]
             except IndexError:
                 print("The number of available posts was smaller than the desired search amount")
                 return all_text, num_checked
             return get_links(start_link, all_text, num_checked, to_check)
+
         else:
             return all_text, num_checked
 
@@ -69,6 +73,7 @@ def get_links(start_link, all_text, num_checked, to_check):
         return all_text, num_checked
 
 
+# This is the code for the Tkinter window
 window = Tk()
 window.title('Job Skill Searcher')
 
@@ -112,6 +117,7 @@ submit_button.grid(columnspan=2,
 
 window.mainloop()
 
+# This makes sure that the whole program won't run unless there were correctly input values
 if career and topics and num_to_check != 1:
     service = Service(executable_path=DRIVER_LOCATION)
     driver = webdriver.Chrome(service=service)
@@ -123,6 +129,7 @@ if career and topics and num_to_check != 1:
     search_bar.send_keys(Keys.ENTER)
     time.sleep(0.2)
 
+    # This gets the first job link, the first job text, and then calls the get_links() function
     try:
         first_link = driver.find_element(by=By.CSS_SELECTOR,
                                          value='.gws-plugins-horizon-jobs__li-ed')
@@ -142,6 +149,7 @@ if career and topics and num_to_check != 1:
 
         filtered_text = re.sub('<[^>]+>', '', new_text)
 
+        # Creates a dictionary for the search terms and the number of times they have been referenced
         count_dict = {}
         for word in search_text:
             count_dict[word] = 0
@@ -149,6 +157,7 @@ if career and topics and num_to_check != 1:
         for word in search_text:
             count_dict[word] += len(re.findall(word.lower(), filtered_text))
 
+        # Displays results
         print(f"\nOut of {num_jobs} job postings, this is the number of references for each topic:\n")
 
         for word in search_text:
@@ -159,5 +168,3 @@ if career and topics and num_to_check != 1:
 
 else:
     print("The program has ended without running")
-
-# Test of commit changes
