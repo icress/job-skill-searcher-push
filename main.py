@@ -153,8 +153,6 @@ if career and topics and num_to_check != 1:
         count_dict = {}
         for word in search_text:
             count_dict[word] = 0
-
-        for word in search_text:
             count_dict[word] += len(re.findall(word.lower(), filtered_text))
 
         # Displays results
