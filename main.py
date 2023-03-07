@@ -45,7 +45,6 @@ def search():
 def get_links(start_link, num_checked, to_check, diction):
     try:
         if num_checked < to_check:
-            start_link.click()
 
             new_elements = driver.find_elements(by=By.CSS_SELECTOR,
                                                 value='#gws-plugins-horizon-jobs__job_details_page')
@@ -57,18 +56,18 @@ def get_links(start_link, num_checked, to_check, diction):
             new_links = driver.find_elements(by=By.CSS_SELECTOR,
                                              value='.gws-plugins-horizon-jobs__tl-lif')
             num_checked += 1
-            print('----------> NEW CONTENT <------------')
-            print(filtered_text)
+
             for skill in search_text:
                 if skill.lower() in filtered_text:
-                    print(f'{skill} ADDED')
                     diction[skill] += 1
+            start_link.click()
 
             try:
                 start_link = new_links[num_checked]
             except IndexError:
                 print("The number of available posts was smaller than the desired search amount")
                 return num_checked, diction
+
             return get_links(start_link, num_checked, to_check, diction)
 
         else:
@@ -135,7 +134,7 @@ if career and topics and num_to_check != 1:
     search_bar.send_keys(Keys.ENTER)
     time.sleep(0.2)
 
-    # This gets the first job link, the first job text, and then calls the get_links() function
+    # This gets the first job link and then calls the get_links() function
     try:
         first_link = driver.find_element(by=By.CSS_SELECTOR,
                                          value='.gws-plugins-horizon-jobs__li-ed')
@@ -149,16 +148,15 @@ if career and topics and num_to_check != 1:
 
         links = driver.find_elements(by=By.CSS_SELECTOR,
                                      value='.gws-plugins-horizon-jobs__tl-lif')
-        first_job = links[1]
+        first_job = links[0]
 
         num_jobs, final_dict = get_links(first_job, 0, num_to_check, trial_dict)
-        print(final_dict)
 
         # Displays results
         print(f"\nOut of {num_jobs} job postings, this is the number of references for each topic:\n")
 
         for word in search_text:
-            print(f"{word} has been referenced {final_dict[word]} times (New method)")
+            print(f"{word} has been referenced in {final_dict[word]} jobs")
 
     except NoSuchElementException:
         print("It seems that there are no job postings for that position. Please try again.")
