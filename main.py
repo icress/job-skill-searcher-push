@@ -11,7 +11,7 @@ from tkinter import *
 DRIVER_LOCATION = os.environ['DRIVER_LOCATION']
 
 career = None
-topics = None
+topics = ''
 num_to_check = 1
 
 
@@ -42,7 +42,7 @@ def search():
 
 
 # This is a recursive function that gets the links for the different job postings
-def get_links(start_link, all_text, num_checked, to_check):
+def get_links(start_link, num_checked, to_check, diction):
     try:
         if num_checked < to_check:
             start_link.click()
@@ -51,26 +51,32 @@ def get_links(start_link, all_text, num_checked, to_check):
                                                 value='#gws-plugins-horizon-jobs__job_details_page')
 
             new_el = new_elements[num_checked]
-            new_content = new_el.get_attribute('innerHTML').strip().lower()
-            all_text += new_content
+            new_content = new_el.get_attribute('innerText').strip().lower()
+            filtered_text = re.sub('<[^>]+>', '', new_content)
 
             new_links = driver.find_elements(by=By.CSS_SELECTOR,
                                              value='.gws-plugins-horizon-jobs__tl-lif')
             num_checked += 1
+            print('----------> NEW CONTENT <------------')
+            print(filtered_text)
+            for skill in search_text:
+                if skill.lower() in filtered_text:
+                    print(f'{skill} ADDED')
+                    diction[skill] += 1
 
             try:
                 start_link = new_links[num_checked]
             except IndexError:
                 print("The number of available posts was smaller than the desired search amount")
-                return all_text, num_checked
-            return get_links(start_link, all_text, num_checked, to_check)
+                return num_checked, diction
+            return get_links(start_link, num_checked, to_check, diction)
 
         else:
-            return all_text, num_checked
+            return num_checked, diction
 
     except NoSuchElementException or ElementNotInteractableException:
         print("The number of available posts was smaller than the desired search amount")
-        return all_text, num_checked
+        return num_checked, diction
 
 
 # This is the code for the Tkinter window
@@ -135,34 +141,29 @@ if career and topics and num_to_check != 1:
                                          value='.gws-plugins-horizon-jobs__li-ed')
         first_link.click()
 
-        text = driver.find_element(by=By.CSS_SELECTOR,
-                                   value='#gws-plugins-horizon-jobs__job_details_page')
-        text_content = text.get_attribute('innerHTML').strip().lower()
+        search_text = topics.split(", ")
+
+        trial_dict = {}
+        for word in search_text:
+            trial_dict[word] = 0
 
         links = driver.find_elements(by=By.CSS_SELECTOR,
                                      value='.gws-plugins-horizon-jobs__tl-lif')
         first_job = links[1]
 
-        search_text = topics.split(", ")
-
-        new_text, num_jobs = get_links(first_job, text_content, 0, num_to_check)
-
-        filtered_text = re.sub('<[^>]+>', '', new_text)
-
-        # Creates a dictionary for the search terms and the number of times they have been referenced
-        count_dict = {}
-        for word in search_text:
-            count_dict[word] = 0
-            count_dict[word] += len(re.findall(word.lower(), filtered_text))
+        num_jobs, final_dict = get_links(first_job, 0, num_to_check, trial_dict)
+        print(final_dict)
 
         # Displays results
         print(f"\nOut of {num_jobs} job postings, this is the number of references for each topic:\n")
 
         for word in search_text:
-            print(f"{word} has been referenced {count_dict[word]} times")
+            print(f"{word} has been referenced {final_dict[word]} times (New method)")
 
     except NoSuchElementException:
         print("It seems that there are no job postings for that position. Please try again.")
 
 else:
     print("The program has ended without running")
+
+# TODO Fix bug: second job not being scanned
