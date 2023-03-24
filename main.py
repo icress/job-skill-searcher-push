@@ -128,8 +128,9 @@ if career and topics and num_to_check != 1:
     driver = webdriver.Chrome(service=service)
 
     driver.get('https://www.google.com/')
-    search_bar = driver.find_element(by=By.CSS_SELECTOR,
-                                     value='input')
+    search_bar = driver.find_element(by=By.NAME,
+                                     value='q')
+    print(search_bar)
     search_bar.send_keys(career, ' jobs')
     search_bar.send_keys(Keys.ENTER)
     time.sleep(0.2)
